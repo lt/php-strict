@@ -10,13 +10,13 @@ ZEND_API zend_op_array *(*weak_compile_string)(zval *src, char *filename);
 ZEND_API zend_op_array *strict_compile_file(zend_file_handle *fd, int type)
 {
 	CG(declarables).strict_types = 1;
-	return compile_file(fd, type);
+	return weak_compile_file(fd, type);
 }
 
 ZEND_API zend_op_array *strict_compile_string(zval *src, char *filename)
 {
 	CG(declarables).strict_types = 1;
-	return compile_string(src, filename);
+	return weak_compile_string(src, filename);
 }
 
 /* {{{ PHP_MINIT_FUNCTION */
