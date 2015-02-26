@@ -42,7 +42,7 @@ zend_module_entry strict_module_entry = {
 	NULL,
 	NULL,
 	NULL,
-	"-1",
+	"0.0.0",
 	STANDARD_MODULE_PROPERTIES
 };
 /* }}} */
