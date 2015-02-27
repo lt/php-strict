@@ -27,6 +27,7 @@ void handle_declare(zend_ast **ast_ptr)
 	zend_ast *value_ast;
 
 	zend_string *name;
+	zend_string *ext;
 	uint32_t i;
 
 	for (i = 0; i < declares->children; i++) {
@@ -36,7 +37,9 @@ void handle_declare(zend_ast **ast_ptr)
 
 		name = zend_ast_get_str(name_ast);
 
-		if (zend_string_equals_literal_ci(name, "strict_types")) {
+		if (zend_string_equals_literal_ci(name, "strict_types") && IS_DECLARE_EX(value_ast)) {
+			ext = GET_DECLARE_EX(value_ast);
+			printf("Extended options: %s\n", ext->val);
 			/* if nothing left after custom value.... 
 
 			zend_ast_destroy(ast);
