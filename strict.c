@@ -3,30 +3,80 @@
 #endif
 
 #include "php.h"
-
-ZEND_API zend_op_array *(*weak_compile_file)(zend_file_handle *fd, int type);
-ZEND_API zend_op_array *(*weak_compile_string)(zval *src, char *filename);
+#include "php_strict.h"
 
 ZEND_API zend_op_array *strict_compile_file(zend_file_handle *fd, int type)
 {
 	CG(declarables).strict_types = 1;
-	return weak_compile_file(fd, type);
+	return orig_compile_file(fd, type);
 }
 
 ZEND_API zend_op_array *strict_compile_string(zval *src, char *filename)
 {
 	CG(declarables).strict_types = 1;
-	return weak_compile_string(src, filename);
+	return orig_compile_string(src, filename);
+}
+
+void handle_declare(zend_ast **ast_ptr)
+{
+	zend_ast *ast = *ast_ptr;
+
+	zend_ast_list *declares = zend_ast_get_list(ast->child[0]);
+	zend_ast *declare_ast;
+	zend_ast *name_ast;
+	zend_ast *value_ast;
+
+	zend_string *name;
+	uint32_t i;
+
+	for (i = 0; i < declares->children; i++) {
+		declare_ast = declares->child[i];
+		name_ast = declare_ast->child[0];
+		value_ast = declare_ast->child[1];
+
+		name = zend_ast_get_str(name_ast);
+
+		if (zend_string_equals_literal_ci(name, "strict_types")) {
+			/* if nothing left after custom value.... 
+
+			zend_ast_destroy(ast);
+			*ast_ptr = NULL;
+			*/
+		}
+	}
+}
+
+void find_declares(zend_ast **ast_ptr)
+{
+	zend_ast *ast = *ast_ptr;
+	
+	if (!ast) {
+		return;
+	}
+
+	if (ast->kind == ZEND_AST_DECLARE) {
+		handle_declare(ast_ptr);
+	}
+	else {
+		zend_ast_apply(ast, find_declares);
+	}
+}
+
+ZEND_API void strict_ast_process(zend_ast *ast)
+{
+	zend_ast_apply(ast, find_declares);
+
+	if (orig_ast_process) {
+		orig_ast_process(ast);
+	}
 }
 
 /* {{{ PHP_MINIT_FUNCTION */
 PHP_MINIT_FUNCTION(strict)
 {
-	weak_compile_file = zend_compile_file;
-	weak_compile_string = zend_compile_string;
-
-	zend_compile_file = strict_compile_file;
-	zend_compile_string = strict_compile_string;
+	STRICT_HOOK(ast_process);
+	STRICT_HOOK(compile_file);
+	STRICT_HOOK(compile_string);
 
 	return SUCCESS;
 }
@@ -42,7 +92,7 @@ zend_module_entry strict_module_entry = {
 	NULL,
 	NULL,
 	NULL,
-	"0.0.0",
+	"0.1.0",
 	STANDARD_MODULE_PROPERTIES
 };
 /* }}} */
@@ -56,6 +106,4 @@ ZEND_GET_MODULE(strict)
  * tab-width: 4
  * c-basic-offset: 4
  * End:
- * vim600: noet sw=4 ts=4 fdm=marker
- * vim<600: noet sw=4 ts=4
  */
