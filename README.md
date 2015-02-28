@@ -3,7 +3,9 @@ php-strict
 
 This is a PHP extension that makes [scalar type hints (v0.5 RFC implementation)](https://wiki.php.net/rfc/scalar_type_hints_v5) strict by default.
 
-With this extension strict mode must be explicitly disabled by placing `declare(strict_types=0);` at the top of a script.
+With this extension strict mode can be explicitly disabled per-file by placing `declare(strict_types=0);` at the top of a script.
+
+The default mode can be set using the extended syntax `declare(strict_types = 0 + 'DEFAULT');`, this keeps it compatible with users  not using this extension, due to type coercion
 
 ### Prerequisites:
 
