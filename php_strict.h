@@ -18,9 +18,7 @@ ZEND_AST_DECLARE
 #define IS_DECLARE_EX(ast) \
 	ast->kind == ZEND_AST_BINARY_OP && \
 	ast->attr == ZEND_ADD && \
-	ast->child[0]->kind == ZEND_AST_ZVAL && \
 	ast->child[1]->kind == ZEND_AST_ZVAL && \
-	Z_TYPE(((zend_ast_zval *)ast->child[0])->val) == IS_LONG && \
 	Z_TYPE(((zend_ast_zval *)ast->child[1])->val) == IS_STRING
 
 #define GET_DECLARE_EX(ast) \
@@ -31,6 +29,7 @@ ZEND_API zend_op_array *(*orig_compile_string)(zval *src, char *filename);
 ZEND_API zend_ast_process_t orig_ast_process;
 
 ZEND_BEGIN_MODULE_GLOBALS(strict)
+	int example;
 ZEND_END_MODULE_GLOBALS(strict)
 
 #ifdef ZTS

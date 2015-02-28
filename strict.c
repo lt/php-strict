@@ -5,6 +5,8 @@
 #include "php.h"
 #include "php_strict.h"
 
+ZEND_DECLARE_MODULE_GLOBALS(strict);
+
 ZEND_API zend_op_array *strict_compile_file(zend_file_handle *fd, int type)
 {
 	CG(declarables).strict_types = 1;
@@ -17,17 +19,35 @@ ZEND_API zend_op_array *strict_compile_string(zval *src, char *filename)
 	return orig_compile_string(src, filename);
 }
 
-void handle_declare(zend_ast **ast_ptr)
+void parse_declare(zend_ast **ast_ptr)
 {
 	zend_ast *ast = *ast_ptr;
+	zend_string *arg;
 
+	while (IS_DECLARE_EX(ast)) {
+		arg = GET_DECLARE_EX(ast);
+
+		if (strcmp(arg->val, "EXAMPLE\0") == 0) {
+			STRICT_G(example) = 1;
+			printf("Example flag detected\n");
+		}
+
+		if (strcmp(arg->val, "ANOTHER\0") == 0) {
+			printf("Another flag detected\n");
+		}
+
+		ast = ast->child[0];
+	}
+}
+
+void handle_declare(zend_ast *ast)
+{
 	zend_ast_list *declares = zend_ast_get_list(ast->child[0]);
 	zend_ast *declare_ast;
 	zend_ast *name_ast;
 	zend_ast *value_ast;
 
 	zend_string *name;
-	zend_string *ext;
 	uint32_t i;
 
 	for (i = 0; i < declares->children; i++) {
@@ -37,14 +57,8 @@ void handle_declare(zend_ast **ast_ptr)
 
 		name = zend_ast_get_str(name_ast);
 
-		if (zend_string_equals_literal_ci(name, "strict_types") && IS_DECLARE_EX(value_ast)) {
-			ext = GET_DECLARE_EX(value_ast);
-			printf("Extended options: %s\n", ext->val);
-			/* if nothing left after custom value.... 
-
-			zend_ast_destroy(ast);
-			*ast_ptr = NULL;
-			*/
+		if (zend_string_equals_literal_ci(name, "strict_types")) {
+			parse_declare(&value_ast);
 		}
 	}
 }
@@ -58,7 +72,7 @@ void find_declares(zend_ast **ast_ptr)
 	}
 
 	if (ast->kind == ZEND_AST_DECLARE) {
-		handle_declare(ast_ptr);
+		handle_declare(ast);
 	}
 	else {
 		zend_ast_apply(ast, find_declares);
