@@ -9,13 +9,13 @@ ZEND_DECLARE_MODULE_GLOBALS(strict);
 
 ZEND_API zend_op_array *strict_compile_file(zend_file_handle *fd, int type)
 {
-	CG(declarables).strict_types = 1;
+	CG(declarables).strict_types = strict_default;
 	return orig_compile_file(fd, type);
 }
 
 ZEND_API zend_op_array *strict_compile_string(zval *src, char *filename)
 {
-	CG(declarables).strict_types = 1;
+	CG(declarables).strict_types = strict_default;
 	return orig_compile_string(src, filename);
 }
 
@@ -24,19 +24,25 @@ void parse_declare(zend_ast **ast_ptr)
 	zend_ast *ast = *ast_ptr;
 	zend_string *arg;
 
+	int want_default = 0;
+	int strict_mode = 0;
+
 	while (IS_DECLARE_EX(ast)) {
 		arg = GET_DECLARE_EX(ast);
 
-		if (strcmp(arg->val, "EXAMPLE\0") == 0) {
-			STRICT_G(example) = 1;
-			printf("Example flag detected\n");
-		}
-
-		if (strcmp(arg->val, "ANOTHER\0") == 0) {
-			printf("Another flag detected\n");
+		if (strcmp(arg->val, "DEFAULT\0") == 0) {
+			want_default = 1;
 		}
 
 		ast = ast->child[0];
+	}
+
+	if (IS_DECLARE_VAL(ast)) {
+		strict_mode = GET_DECLARE_VAL(ast);
+
+		if (want_default == 1) {
+			strict_default = strict_mode;
+		}
 	}
 }
 

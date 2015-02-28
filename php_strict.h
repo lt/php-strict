@@ -24,12 +24,20 @@ ZEND_AST_DECLARE
 #define GET_DECLARE_EX(ast) \
 	Z_STR(((zend_ast_zval *)ast->child[1])->val)
 
+#define IS_DECLARE_VAL(ast) \
+	ast->kind == ZEND_AST_ZVAL && \
+	Z_TYPE(((zend_ast_zval *)ast)->val) == IS_LONG
+
+#define GET_DECLARE_VAL(ast) \
+	Z_LVAL(((zend_ast_zval *)ast)->val)
+
 ZEND_API zend_op_array *(*orig_compile_file)(zend_file_handle *fd, int type);
 ZEND_API zend_op_array *(*orig_compile_string)(zval *src, char *filename);
 ZEND_API zend_ast_process_t orig_ast_process;
 
+int strict_default = 1;
+
 ZEND_BEGIN_MODULE_GLOBALS(strict)
-	int example;
 ZEND_END_MODULE_GLOBALS(strict)
 
 #ifdef ZTS
